@@ -1,8 +1,13 @@
+body {
+  margin: 0 auto;
+  max-width: 800px;
+}
+
 .outer-container {
   margin: 30px;
   border: 1px #d3d3d3 solid;
   border-radius: 5px;
-  height: 500px;
+  padding-bottom: 20px;
 }
 
 .header-container {
@@ -24,4 +29,93 @@
 .profile-image img{
   border: 1px solid #d3d3d3;
   border-radius: 50px;
+}
+
+.body-container {
+  text-align: center;
+}
+
+.set-size {
+  font-size: 7em;
+}
+
+.pie-wrapper {
+  height: 1em;
+  width: 1em;
+  margin: 15px auto;
+  position: relative;
+}
+
+.pie-wrapper .pie {
+  height: 100%;
+  width: 100%;
+  clip: rect(0, 1em, 1em, 0.5em);
+  position: absolute;
+}
+.pie-wrapper .pie .half-circle {
+  height: 100%;
+  width: 100%;
+  border: 0.1em solid #337ab7;
+  border-radius: 50%;
+  clip: rect(0, 0.5em, 1em, 0);
+  position: absolute;
+  border-color: #337ab7;
+}
+.pie-wrapper .label {
+  bottom: 0.4em;
+  color: #ecf0f1;
+  font-size: 0.43em;
+  position: absolute;
+  display: block;
+}
+.pie-wrapper .pie .right-side {
+  -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+  display: block;
+}
+.pie-wrapper .pie .left-side {
+  -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+}
+
+.body-text {
+  width: 60%;
+  margin: 0 auto;
+}
+
+.body-stats-container {
+  display: flex;
+  width: 70%;
+  margin: 20px auto;
+  justify-content: space-around;
+}
+
+.body-stat {
+  border: 1px solid #d3d3d3;
+  display: flex;
+  align-content: center;
+  justify-content: space-around;
+  width: 140px;
+  height: 40px;
+}
+
+.body-stat span {
+  margin: auto 0;
+}
+
+.body-table table {
+  width: 100%;
+}
+
+.body-table table th {
+  padding-left: 10px;
+}
+
+.body-table table tr {
+  height: 2.5em;
+}
+
+.body-table table tbody tr {
+  border-top: 1px solid #d3d3d3;
+  border-bottom: 1px solid #d3d3d3;
 }
