@@ -105,10 +105,11 @@ body {
 
 .body-table table {
   width: 100%;
+  text-align: left;
 }
 
 .body-table table th {
-  padding-left: 10px;
+  padding-left: 20px;
 }
 
 .body-table table tr {
@@ -118,4 +119,8 @@ body {
 .body-table table tbody tr {
   border-top: 1px solid #d3d3d3;
   border-bottom: 1px solid #d3d3d3;
+}
+
+.body-table table tbody td {
+  padding-left: 10px;
 }

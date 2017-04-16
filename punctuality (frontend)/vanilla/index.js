@@ -17,29 +17,108 @@
   document.querySelector(".pie-wrapper.countdown-timer .pie .left-side").setAttribute("style", "transform: rotate(" + progressBarDegrees + "deg)");
 })();
 
-const URL = 'http://localhost:4567/shifts/2013-01-15/2015-09-15';
-function getData(URL) {
-  const data = fetch(URL, { method: 'GET' })
-                .then(response => response.json())
-                .then(data => {
-                  const tbody = document.querySelector('.body-table table tbody');
-                  data.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.appendChild(getTd(moment(new Date(item.date)).format('MMMM Do YYYY')));
-                    tr.appendChild(getTd("")); // Roster start time
-                    tr.appendChild(getTd(item.start));
-                    tr.appendChild(getTd(""));
-                    tr.appendChild(getTd(item.finish));
-                    tbody.appendChild(tr);
-                  });
-                });
+const URL_SHIFTS = 'http://localhost:4567/shifts/2013-01-15/2015-09-15';
+const URL_ROSTERS = 'http://localhost:4567/rosters/2013-01-15/2015-09-15';
+const stats = {
+  arrivedLate: 0,
+  punctual: 0,
+  leftEarly: 0,
+};
+
+(function getData() {
+  fetch(URL_ROSTERS, { method: 'GET' })
+    .then(response => response.json())
+    .then(data => handleRosterData(data));
+})();
+
+function handleRosterData(data) {
+  const tbody = document.querySelector('.body-table table tbody');
+  data.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('id', item.date);
+    tr.appendChild(getTd(item.date, 'MMMM Do YYYY'));
+    tr.appendChild(getTd(item.start, 'LT')); // Roster start time
+    tr.appendChild(getTd(""));
+    tr.appendChild(getTd(item.finish, 'LT'));
+    tr.appendChild(getTd(""));
+    tbody.appendChild(tr);
+  });
+
+  fetch(URL_SHIFTS)
+    .then(response => response.json())
+    .then(data => handleShiftData(data))
+    //.then(displayStats());
 }
 
-function getTd(content) {
+function handleShiftData(data) {
+  data.forEach(item => {
+    const tr = document.getElementById(item.date);
+    if (tr) {
+      const startTimeStatus = compareDateWithColumn(tr, item.start, 1, true);
+      addToStats(startTimeStatus);
+      appendContentToElement(tr.children[2], startTimeStatus, item.start);
+      
+      const finishTimeStatus = compareDateWithColumn(tr, item.finish, 3, false);
+      addToStats(finishTimeStatus);
+      appendContentToElement(tr.children[4], finishTimeStatus, item.finish);
+    }
+  });
+  displayStats();
+}
+
+function displayStats() {
+  document.getElementById('arrivedLate').innerHTML = stats.arrivedLate;
+  document.getElementById('punctual').innerHTML = stats.punctual;
+  document.getElementById('leftEarly').innerHTML = stats.leftEarly;
+}
+
+function compareDateWithColumn(tr, date, colNum, isStartTime) {
+  const colDate = moment(new Date(tr.children[colNum].getAttribute('data-date')));
+  const compareToDate = moment(date);
+  return displayIfOnTime(colDate, compareToDate, isStartTime);
+}
+
+function appendContentToElement(element, content, date) {
+  const contentNode = document.createTextNode(content);
+  element.appendChild(contentNode);
+  element.setAttribute('data-date', date);
+}
+
+function displayIfOnTime(rosteredTime, actualTime, isStarting) {
+  const timeDiff = rosteredTime.diff(actualTime, 'minutes');
+  if (timeDiff === 0) {
+    return 'on time';
+  } else if (timeDiff > 0) {
+    return isStarting ? 'started early' : 'left early';
+  }
+  return isStarting ? 'started late' : 'left late';
+}
+
+function addToStats(displayString) {
+  switch (displayString) {
+    case 'on time':
+      stats.punctual += 1;
+      break;
+    case 'started late':
+      stats.arrivedLate += 1;
+      break;
+    case 'left early':
+      stats.leftEarly += 1;
+      break;
+  }
+}
+
+function getTd(content, dateFormat) {
   const td = document.createElement('td');
-  const contentNode = document.createTextNode(content)
+  const friendlyDateValue = dateFormat ? getFriendlyDate(content, dateFormat) : '';
+  const contentNode = document.createTextNode(friendlyDateValue);
   td.appendChild(contentNode);
+  td.setAttribute('data-date', content);
   return td;
 }
 
-getData(URL);
+function getFriendlyDate(dateStr, format) {
+  return moment(new Date(dateStr)).format(format);
+}
+
+// Could try adding both lists to an array and then manipulating it so I only need to loop through once
