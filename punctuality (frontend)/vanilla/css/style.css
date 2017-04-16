@@ -99,6 +99,14 @@ body {
   height: 40px;
 }
 
+.body-stat :nth-child(1) {
+  opacity: 0.8;
+}
+
+.body-stat :nth-child(2) {
+  font-weight: bold;
+}
+
 .body-stat span {
   margin: auto 0;
 }
@@ -123,4 +131,23 @@ body {
 
 .body-table table tbody td {
   padding-left: 10px;
+  position: relative;
+  opacity: 0.9;
+}
+
+.hover-box {
+  position: absolute;
+  background-color: #000;
+  color: #fff;
+  opacity: 0;
+  top: -5px;
+  left: 50px;
+  width: 80px;
+  border-radius: 5px;
+  text-align: center;
+  transition: opacity 1s;
+}
+
+.body-table table tbody td:hover .hover-box {
+  opacity: 0.8;
 }

@@ -80,18 +80,35 @@ function compareDateWithColumn(tr, date, colNum, isStartTime) {
 
 function appendContentToElement(element, content, date) {
   const contentNode = document.createTextNode(content);
+  const hoverDiv = document.createElement('div');
+  const hoverContent = document.createTextNode(moment(date).format('LT'));
+
+  hoverDiv.setAttribute('class', 'hover-box');
+  hoverDiv.appendChild(hoverContent);
   element.appendChild(contentNode);
+  element.appendChild(hoverDiv);
   element.setAttribute('data-date', date);
 }
 
-function displayIfOnTime(rosteredTime, actualTime, isStarting) {
+function handleMouseOver(date, parentElement) {
+  const div = document.createElement('div');
+  div.innerHTML = moment(date).format('LT');
+  div.setAttribute('style', 'position: absolute; height: 40px; width: 100px; background-color: black; text-align: center;')
+  parentElement.appendChild(div);
+}
+
+function handleMouseLeave(element) {
+  element.firstElementChild.remove();
+}
+
+function displayIfOnTime(rosteredTime, actualTime, isStartTime) {
   const timeDiff = rosteredTime.diff(actualTime, 'minutes');
-  if (timeDiff === 0) {
-    return 'on time';
-  } else if (timeDiff > 0) {
-    return isStarting ? 'started early' : 'left early';
+  if (timeDiff > 0 && !isStartTime) {
+    return 'left early';
+  } else if (timeDiff < 0 && isStartTime) {
+    return 'started late'
   }
-  return isStarting ? 'started late' : 'left late';
+  return 'on time';
 }
 
 function addToStats(displayString) {
