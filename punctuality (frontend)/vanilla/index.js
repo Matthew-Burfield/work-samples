@@ -1,21 +1,21 @@
-(function updateProgressBar() {
-  var progressBarDegrees = 0.95 * 360;
+function updateProgressBar(percentage) {
+  var progressBarDegrees = percentage * 360;
 
   if (progressBarDegrees > 180) {
-    document.querySelector(".pie-wrapper.countdown-timer .pie .right-side").setAttribute("style", "display: block");
-    document.querySelector(".pie-wrapper.countdown-timer .pie").setAttribute("style", "clip: rect(auto, auto, auto, auto)");
-    document.querySelector(".pie-wrapper.countdown-timer .pie .right-side").setAttribute("style", "-webkit-transform: rotate(180deg)");
-    document.querySelector(".pie-wrapper.countdown-timer .pie .right-side").setAttribute("style", "transform: rotate(180deg)");
+    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "display: block");
+    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: rect(auto, auto, auto, auto)");
+    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "-webkit-transform: rotate(180deg)");
+    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "transform: rotate(180deg)");
   } 
   if (progressBarDegrees <= 180) {
-    document.querySelector(".pie-wrapper.countdown-timer .pie .right-side").setAttribute("style", "display: none");
-    document.querySelector(".pie-wrapper.countdown-timer .pie .right-side").setAttribute("style", "-webkit-transform: rotate(0deg)");
-    document.querySelector(".pie-wrapper.countdown-timer .pie .right-side").setAttribute("style", "transform: rotate(0deg)");
-    document.querySelector(".pie-wrapper.countdown-timer .pie").setAttribute("style", "clip: ''");
+    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "display: none");
+    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "-webkit-transform: rotate(0deg)");
+    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "transform: rotate(0deg)");
+    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: ''");
   } 
-  document.querySelector(".pie-wrapper.countdown-timer .pie .left-side").setAttribute("style", "-webkit-transform: rotate(" + progressBarDegrees + "deg)");
-  document.querySelector(".pie-wrapper.countdown-timer .pie .left-side").setAttribute("style", "transform: rotate(" + progressBarDegrees + "deg)");
-})();
+  document.querySelector(".pie-wrapper .pie .left-side").setAttribute("style", "-webkit-transform: rotate(" + progressBarDegrees + "deg)");
+  document.querySelector(".pie-wrapper .pie .left-side").setAttribute("style", "transform: rotate(" + progressBarDegrees + "deg)");
+};
 
 const URL_SHIFTS = 'http://localhost:4567/shifts/2013-01-15/2015-09-15';
 const URL_ROSTERS = 'http://localhost:4567/rosters/2013-01-15/2015-09-15';
@@ -67,9 +67,13 @@ function handleShiftData(data) {
 }
 
 function displayStats() {
+  const percentage = stats.punctual / (stats.arrivedLate + stats.punctual + stats.leftEarly);
   document.getElementById('arrivedLate').innerHTML = stats.arrivedLate;
   document.getElementById('punctual').innerHTML = stats.punctual;
   document.getElementById('leftEarly').innerHTML = stats.leftEarly;
+  document.querySelector('.pie-wrapper .label').innerHTML = percentage * 100 + '';
+  document.querySelector('.body-text span').innerHTML = percentage * 100 + '';
+  updateProgressBar(percentage);
 }
 
 function compareDateWithColumn(tr, date, colNum, isStartTime) {

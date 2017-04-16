@@ -52,11 +52,8 @@ body {
   text-align: center;
 }
 
-.set-size {
-  font-size: 7em;
-}
-
 .pie-wrapper {
+  font-size: 7em;
   height: 1em;
   width: 1em;
   margin: 15px auto;
@@ -80,7 +77,7 @@ body {
 }
 .pie-wrapper .label {
   bottom: 0.4em;
-  color: #ecf0f1;
+  color: #337ab7;
   font-size: 0.43em;
   position: absolute;
   display: block;
@@ -91,10 +88,12 @@ body {
   -webkit-transform: rotate(0deg);
           transform: rotate(0deg);
   display: block;
+  transition: transform 2s ease-in;
 }
 .pie-wrapper .pie .left-side {
   -webkit-transform: rotate(0deg);
           transform: rotate(0deg);
+  transition: transform 2s ease-in;
 }
 
 .body-text {
@@ -116,14 +115,13 @@ body {
   justify-content: space-around;
   width: 140px;
   height: 40px;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 
 .body-stat :nth-child(1) {
-  opacity: 0.8;
-}
-
-.body-stat :nth-child(2) {
-  font-weight: bold;
+  opacity: 0.6;
 }
 
 .body-stat span {
