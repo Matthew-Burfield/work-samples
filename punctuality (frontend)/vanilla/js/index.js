@@ -1,22 +1,3 @@
-function updateProgressBar(percentage) {
-  var progressBarDegrees = percentage * 360;
-
-  if (progressBarDegrees > 180) {
-    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "display: block");
-    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: rect(auto, auto, auto, auto)");
-    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "-webkit-transform: rotate(180deg)");
-    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "transform: rotate(180deg)");
-  } 
-  if (progressBarDegrees <= 180) {
-    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "display: none");
-    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "-webkit-transform: rotate(0deg)");
-    document.querySelector(".pie-wrapper .pie .right-side").setAttribute("style", "transform: rotate(0deg)");
-    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: ''");
-  } 
-  document.querySelector(".pie-wrapper .pie .left-side").setAttribute("style", "-webkit-transform: rotate(" + progressBarDegrees + "deg)");
-  document.querySelector(".pie-wrapper .pie .left-side").setAttribute("style", "transform: rotate(" + progressBarDegrees + "deg)");
-};
-
 const URL_SHIFTS = 'http://localhost:4567/shifts/2013-01-15/2015-09-15';
 const URL_ROSTERS = 'http://localhost:4567/rosters/2013-01-15/2015-09-15';
 const stats = {
@@ -25,12 +6,56 @@ const stats = {
   leftEarly: 0,
 };
 
+function updateProgressBar(percentage) {
+  var progressBarDegrees = percentage * 360;
+
+  if (progressBarDegrees > 180) {
+    setPieWrapperRightSideStyles(180);
+    setStyles(document.querySelector(".pie-wrapper .pie"), ["clip: rect(auto, auto, auto, auto)"]);
+  } 
+  if (progressBarDegrees <= 180) {
+    setPieWrapperRightSideStyles(0);
+    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: ''");
+  }
+  setStyles(
+    document.querySelector(".pie-wrapper .pie .left-side"),
+    [
+      "-webkit-transform: rotate(" + progressBarDegrees + "deg)",
+      "transform: rotate(" + progressBarDegrees + "deg)",
+    ]);
+};
+
+function setPieWrapperRightSideStyles(setDegrees) {
+  const display = setDegrees ? 'block' : 'none';
+  setStyles(
+    document.querySelector(".pie-wrapper .pie .right-side"),
+    [
+      `display: ${display}`,
+      `-webkit-transform: rotate(${setDegrees}deg)`,
+      `transform: rotate(${setDegrees}deg)`
+    ]);
+}
+
+function setStyles(element, listOfStyles) {
+  listOfStyles.forEach(style => element.setAttribute('style', style));
+}
+
+/**
+ * Start the API calls here. Gets the roster data first
+ */
 (function getData() {
   fetch(URL_ROSTERS, { method: 'GET' })
     .then(response => response.json())
     .then(data => handleRosterData(data));
 })();
 
+/**
+ * Loops through the array of roster objects and creates
+ * td DOM elements for each one.
+ * After all DOM elements have been added, get the shift data.
+ * 
+ * @param {array} data The roster data objects returned from the server
+ */
 function handleRosterData(data) {
   const tbody = document.querySelector('.body-table table tbody');
   data.forEach(item => {
@@ -50,15 +75,25 @@ function handleRosterData(data) {
     //.then(displayStats());
 }
 
+/**
+ * Loop through the shift data and find the corresponding roster table row.
+ * Compare the shift start and end times with the roster start and end times in
+ * the corresponding td data-date attributes.
+ * 
+ * After all date computation is done, update the stats and convert the table
+ * into a data table
+ * 
+ * @param {array} data The shift data objects returned from the server
+ */
 function handleShiftData(data) {
   data.forEach(item => {
     const tr = document.getElementById(item.date);
     if (tr) {
-      const startTimeStatus = compareDateWithColumn(tr, item.start, 1, true);
+      const startTimeStatus = compareDateWithColumn(tr, item.start, true);
       addToStats(startTimeStatus);
       appendContentToElement(tr.children[2], startTimeStatus, item.start);
       
-      const finishTimeStatus = compareDateWithColumn(tr, item.finish, 3, false);
+      const finishTimeStatus = compareDateWithColumn(tr, item.finish, false);
       addToStats(finishTimeStatus);
       appendContentToElement(tr.children[4], finishTimeStatus, item.finish);
     }
@@ -67,6 +102,10 @@ function handleShiftData(data) {
   addDataTable();
 }
 
+/**
+ * Helper function to set the data table settings
+ * https://datatables.net/examples/index
+ */
 function addDataTable() {
   $('.body-table table').DataTable( {
     "pagingType": "simple",
@@ -74,6 +113,11 @@ function addDataTable() {
   } );
 }
 
+/**
+ * This is called after all the API calls have finished, and
+ * the table is finished populating
+ * 
+ */
 function displayStats() {
   const percentage = stats.punctual / (stats.arrivedLate + stats.punctual + stats.leftEarly);
   document.getElementById('arrivedLate').innerHTML = stats.arrivedLate;
@@ -84,8 +128,18 @@ function displayStats() {
   updateProgressBar(percentage);
 }
 
-function compareDateWithColumn(tr, date, colNum, isStartTime) {
-  const colDate = moment(new Date(tr.children[colNum].getAttribute('data-date')));
+/**
+ * 
+ * 
+ * @param {node} tr The table row that we want to compare rostered and actual times
+ * @param {string} date The actual date/time the person started
+ * @param {boolean} isStartTime true if we are comparing to the rostered start,
+ *                              false if we are comparing to the rostered finish
+ * @returns {string} 'ont time' || 'left early' || 'started late'
+ */
+function compareDateWithColumn(tr, date, isStartTime) {
+  const colNum = isStartTime ? 1 : 3;
+  const colDate = moment(tr.children[colNum].getAttribute('data-date'));
   const compareToDate = moment(date);
   return displayIfOnTime(colDate, compareToDate, isStartTime);
 }
@@ -147,7 +201,9 @@ function getTd(content, dateFormat) {
 }
 
 function getFriendlyDate(dateStr, format) {
-  return moment(new Date(dateStr)).format(format);
+  return moment(dateStr).format(format);
 }
+
+
 
 // Could try adding both lists to an array and then manipulating it so I only need to loop through once
