@@ -64,12 +64,13 @@ function handleShiftData(data) {
     }
   });
   displayStats();
-  
+  addDataTable();
 }
 
-function addTableFunctions() {
-  document.querySelector('.body-container table').DataTable( {
-    "pagingType": "full_numbers"
+function addDataTable() {
+  $('.body-table table').DataTable( {
+    "pagingType": "simple",
+    "dom": '<t><"table-page"lp><"table-info"i>'
   } );
 }
 

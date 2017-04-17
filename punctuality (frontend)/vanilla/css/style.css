@@ -69,15 +69,15 @@ body {
 .pie-wrapper .pie .half-circle {
   height: 100%;
   width: 100%;
-  border: 0.1em solid #337ab7;
+  border: 0.1em solid #2196F3;
   border-radius: 50%;
   clip: rect(0, 0.5em, 1em, 0);
   position: absolute;
-  border-color: #337ab7;
+  border-color: #2196F3;
 }
 .pie-wrapper .label {
   bottom: 0.4em;
-  color: #337ab7;
+  color: #2196F3;
   font-size: 0.43em;
   position: absolute;
   display: block;
@@ -115,13 +115,13 @@ body {
   justify-content: space-around;
   width: 140px;
   height: 40px;
-  font-size: 0.8em;
-  text-transform: uppercase;
   font-weight: bold;
 }
 
 .body-stat :nth-child(1) {
   opacity: 0.6;
+  font-size: 0.8em;
+  text-transform: uppercase;
 }
 
 .body-stat span {
@@ -141,15 +141,12 @@ body {
   height: 2.5em;
 }
 
-.body-table table tbody tr {
-  border-top: 1px solid #d3d3d3;
-  border-bottom: 1px solid #d3d3d3;
-}
+
 
 .body-table table tbody td {
   padding-left: 10px;
   position: relative;
-  opacity: 0.9;
+  opacity: 0.7;
 }
 
 .hover-box {
@@ -167,4 +164,16 @@ body {
 
 .body-table table tbody td:hover .hover-box {
   opacity: 0.8;
+}
+
+.table-page {
+  margin: 10px 30px;
+}
+
+.table-page :first-child {
+  margin-top: 11px;
+}
+
+.table-info {
+  margin-left: 30px;
 }
