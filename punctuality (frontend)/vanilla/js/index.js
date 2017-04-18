@@ -1,44 +1,17 @@
 const URL_SHIFTS = 'http://localhost:4567/shifts/2013-01-15/2015-09-15';
 const URL_ROSTERS = 'http://localhost:4567/rosters/2013-01-15/2015-09-15';
 const stats = {
-  arrivedLate: 0,
-  punctual: 0,
-  leftEarly: 0,
+  arrivedLate: [],
+  punctual: [],
+  leftEarly: [],
 };
-
-function updateProgressBar(percentage) {
-  var progressBarDegrees = percentage * 360;
-
-  if (progressBarDegrees > 180) {
-    setPieWrapperRightSideStyles(180);
-    setStyles(document.querySelector(".pie-wrapper .pie"), ["clip: rect(auto, auto, auto, auto)"]);
-  } 
-  if (progressBarDegrees <= 180) {
-    setPieWrapperRightSideStyles(0);
-    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: ''");
-  }
-  setStyles(
-    document.querySelector(".pie-wrapper .pie .left-side"),
-    [
-      "-webkit-transform: rotate(" + progressBarDegrees + "deg)",
-      "transform: rotate(" + progressBarDegrees + "deg)",
-    ]);
+const COLUMNS = {
+  DAY: 0,
+  ROSTERED_START: 1,
+  ACTUAL_START: 2,
+  ROSTERED_FINISH: 3,
+  ACTUAL_FINISH: 4,
 };
-
-function setPieWrapperRightSideStyles(setDegrees) {
-  const display = setDegrees ? 'block' : 'none';
-  setStyles(
-    document.querySelector(".pie-wrapper .pie .right-side"),
-    [
-      `display: ${display}`,
-      `-webkit-transform: rotate(${setDegrees}deg)`,
-      `transform: rotate(${setDegrees}deg)`
-    ]);
-}
-
-function setStyles(element, listOfStyles) {
-  listOfStyles.forEach(style => element.setAttribute('style', style));
-}
 
 /**
  * Start the API calls here. Gets the roster data first
@@ -89,18 +62,42 @@ function handleShiftData(data) {
   data.forEach(item => {
     const tr = document.getElementById(item.date);
     if (tr) {
-      const startTimeStatus = compareDateWithColumn(tr, item.start, true);
-      addToStats(startTimeStatus);
-      appendContentToElement(tr.children[2], startTimeStatus, item.start);
-      
-      const finishTimeStatus = compareDateWithColumn(tr, item.finish, false);
-      addToStats(finishTimeStatus);
-      appendContentToElement(tr.children[4], finishTimeStatus, item.finish);
+      updateActualStartFinishColumn(tr, item.start, true);
+      updateActualStartFinishColumn(tr, item.finish, false);
     }
   });
-  displayStats();
+  displayStats(30);
   addDataTable();
 }
+
+
+/**
+ * Appends the time status to the actual start/finish column
+ * and adds to the overall stats
+ * 
+ * @param {object} tr 
+ * @param {string} actualTimeVal 
+ * @param {boolean} isStartTime 
+ */
+function updateActualStartFinishColumn(tr, actualTimeVal, isStartTime) {
+  const rosteredTimeCol = isStartTime ? COLUMNS.ROSTERED_START : COLUMNS.ROSTERED_FINISH;
+  const actualTimeCol = isStartTime ? COLUMNS.ACTUAL_START : COLUMNS.ACTUAL_FINISH;
+
+  const rosteredTimeVal = tr.children[rosteredTimeCol].getAttribute('data-date');
+  const actualTimeColNode = tr.children[actualTimeCol];
+
+  const timeDifference = getTimeDifference(rosteredTimeVal, actualTimeVal);
+  const timeStatus = getActualTimeStatus(timeDifference, actualTimeVal, isStartTime);
+  const timeDifferenceTagNode = getTimeDifferenceTagNode(timeStatus, timeDifference);
+
+  addToStats(timeStatus, timeDifference);
+  appendContentToElement(actualTimeColNode, timeStatus, actualTimeVal);
+  if (timeDifferenceTagNode) {
+    actualTimeColNode.appendChild(timeDifferenceTagNode);
+  }
+}
+
+
 
 /**
  * Helper function to set the data table settings
@@ -118,32 +115,87 @@ function addDataTable() {
  * the table is finished populating
  * 
  */
-function displayStats() {
-  const percentage = stats.punctual / (stats.arrivedLate + stats.punctual + stats.leftEarly);
-  document.getElementById('arrivedLate').innerHTML = stats.arrivedLate;
-  document.getElementById('punctual').innerHTML = stats.punctual;
-  document.getElementById('leftEarly').innerHTML = stats.leftEarly;
-  document.querySelector('.pie-wrapper .label').innerHTML = percentage * 100 + '';
-  document.querySelector('.body-text span').innerHTML = percentage * 100 + '';
+function displayStats(punctualErrorMargin) {
+  const totalCountOfShifts = stats.punctual.length + stats.arrivedLate.length + stats.leftEarly.length;
+  
+  const arrivedLate = stats.arrivedLate.filter(time => time > punctualErrorMargin).length;
+  const leftEarly = stats.leftEarly.filter(time => time > punctualErrorMargin).length;
+  const percentage = Math.round(totalCountOfShifts / (arrivedLate + totalCountOfShifts + leftEarly) * 100);
+  
+  document.getElementById('arrivedLate').innerHTML = stats.arrivedLate.length;
+  document.getElementById('punctual').innerHTML = stats.punctual.length;
+  document.getElementById('leftEarly').innerHTML = stats.leftEarly.length;
+  document.querySelector('.pie-wrapper .label').innerHTML = percentage;
+  document.querySelector('.body-text span').innerHTML = percentage;
   updateProgressBar(percentage);
 }
+
 
 /**
  * 
  * 
- * @param {node} tr The table row that we want to compare rostered and actual times
- * @param {string} date The actual date/time the person started
+ * @param {string} rosteredTime The time the user was rostered to start their shift
+ * @param {string} actualTime The actual time the person started their shift
  * @param {boolean} isStartTime true if we are comparing to the rostered start,
  *                              false if we are comparing to the rostered finish
- * @returns {string} 'ont time' || 'left early' || 'started late'
+ * @returns {string} 'no time clocked' || 'on time' || 'left early' || 'started late'
  */
-function compareDateWithColumn(tr, date, isStartTime) {
-  const colNum = isStartTime ? 1 : 3;
-  const colDate = moment(tr.children[colNum].getAttribute('data-date'));
-  const compareToDate = moment(date);
-  return displayIfOnTime(colDate, compareToDate, isStartTime);
+function getActualTimeStatus(timeDiff, actualTime, isStartTime) {
+  if (actualTime === '') {
+    return 'no time clocked';
+  }
+  if (timeDiff > 0 && !isStartTime) {
+    return 'left early';
+  } else if (timeDiff < 0 && isStartTime) {
+    return 'started late';
+  }
+  return 'on time';
 }
 
+
+/**
+ * Creates the DOM element for the orange tag that displays
+ * how many minites the person started late or ended early
+ * 
+ * @param {string} timeStatus the status from the actual start/finish column
+ * @param {any} timeDifference the difference of time between the rostered
+ *                             start/finish and the actual start/finish in minutes
+ * @returns DOM element or null if person was on time
+ */
+function getTimeDifferenceTagNode(timeStatus, timeDifference) {
+  if (timeStatus === 'left early' || timeStatus === 'started late') {
+    const node = document.createElement('span');
+    node.classList.add('time-diff-tag');
+    node.appendChild(document.createTextNode(`${Math.abs(timeDifference)} minutes`));
+    return node;
+  }
+  return null;
+}
+
+
+/**
+ * Get t the time difference between the two values in minutes
+ * 
+ * @param {string} rosteredTime 
+ * @param {string} actualTime 
+ * @returns {number} time difference in minutes
+ */
+function getTimeDifference(rosteredTime, actualTime) {
+  if (!rosteredTime || !actualTime) {
+    return null;
+  }
+  return moment(rosteredTime).diff(moment(actualTime), 'minutes');
+}
+
+
+/**
+ * Given a DOM element and some content, add the content as
+ * a child
+ * 
+ * @param {object} element 
+ * @param {string} content 
+ * @param {string} date value to be added to the data-date attribute of the element
+ */
 function appendContentToElement(element, content, date) {
   const contentNode = document.createTextNode(content);
   const hoverDiv = document.createElement('div');
@@ -156,41 +208,36 @@ function appendContentToElement(element, content, date) {
   element.setAttribute('data-date', date);
 }
 
-function handleMouseOver(date, parentElement) {
-  const div = document.createElement('div');
-  div.innerHTML = moment(date).format('LT');
-  div.setAttribute('style', 'position: absolute; height: 40px; width: 100px; background-color: black; text-align: center;')
-  parentElement.appendChild(div);
-}
 
-function handleMouseLeave(element) {
-  element.firstElementChild.remove();
-}
-
-function displayIfOnTime(rosteredTime, actualTime, isStartTime) {
-  const timeDiff = rosteredTime.diff(actualTime, 'minutes');
-  if (timeDiff > 0 && !isStartTime) {
-    return 'left early';
-  } else if (timeDiff < 0 && isStartTime) {
-    return 'started late'
-  }
-  return 'on time';
-}
-
-function addToStats(displayString) {
+/**
+ * Adds the time difference to the list of stats
+ * Updates the stats global array
+ * 
+ * @param {string} displayString 
+ * @param {number} timeDifference 
+ */
+function addToStats(displayString, timeDifference) {
   switch (displayString) {
     case 'on time':
-      stats.punctual += 1;
+      stats.punctual.push(Math.abs(timeDifference));
       break;
     case 'started late':
-      stats.arrivedLate += 1;
+      stats.arrivedLate.push(Math.abs(timeDifference));
       break;
     case 'left early':
-      stats.leftEarly += 1;
+      stats.leftEarly.push(Math.abs(timeDifference));
       break;
   }
 }
 
+
+/**
+ * Creates a td element the new table tr
+ * 
+ * @param {string} content value that should displayed in the td
+ * @param {string} dateFormat should be a valid date format specified by moment.js
+ * @returns {object} The td DOM node
+ */
 function getTd(content, dateFormat) {
   const td = document.createElement('td');
   const friendlyDateValue = dateFormat ? getFriendlyDate(content, dateFormat) : '';
@@ -200,10 +247,87 @@ function getTd(content, dateFormat) {
   return td;
 }
 
+
+/**
+ * Uses moment.js to return a friendly looking date
+ * 
+ * @param {string} dateStr 
+ * @param {string} format Should be a valid date format specified by moment.js
+ * @returns 
+ */
 function getFriendlyDate(dateStr, format) {
   return moment(dateStr).format(format);
 }
 
 
+/**
+ * Handler for when the user changes the text in the minutes text box
+ * 
+ * @param {*} e 
+ */
+const handlePunctualErrorMarginInputEvent = (e) => {
+  const val = e.target.value;
+  if (isNaN(val)) {
+    return;
+  }
+  displayStats(val);
+}
+
+/**
+ * Updates the circular percentage graphic
+ * 
+ * @param {number} percentage 
+ */
+function updateProgressBar(percentage) {
+  const progressBarDegrees = percentage / 100 * 360;
+
+  if (progressBarDegrees > 180) {
+    setPieWrapperRightSideStyles(180);
+    setStyles(document.querySelector(".pie-wrapper .pie"), ["clip: rect(auto, auto, auto, auto)"]);
+  } 
+  if (progressBarDegrees <= 180) {
+    setPieWrapperRightSideStyles(0);
+    document.querySelector(".pie-wrapper .pie").setAttribute("style", "clip: ''");
+  }
+  setStyles(
+    document.querySelector(".pie-wrapper .pie .left-side"),
+    [
+      "-webkit-transform: rotate(" + progressBarDegrees + "deg)",
+      "transform: rotate(" + progressBarDegrees + "deg)",
+    ]);
+};
+
+/**
+ * Helper function to update the circular percentage graphic.
+ * This sets the attributes increase or decrease the pie chart colour
+ * 
+ * @param {number} setDegrees 
+ */
+function setPieWrapperRightSideStyles(setDegrees) {
+  const display = setDegrees ? 'block' : 'none';
+  setStyles(
+    document.querySelector(".pie-wrapper .pie .right-side"),
+    [
+      `display: ${display}`,
+      `-webkit-transform: rotate(${setDegrees}deg)`,
+      `transform: rotate(${setDegrees}deg)`
+    ]);
+}
+
+/**
+ * Helper function to set multiple styles for a given element
+ * 
+ * @param {object} element 
+ * @param {array} listOfStyles 
+ */
+function setStyles(element, listOfStyles) {
+  listOfStyles.forEach(style => element.setAttribute('style', style));
+}
+
+/**
+ * Add the event listener for the text input
+ * Allows the user to update the punctual +/- minutes
+ */
+document.getElementById("punctualErrorMargin").addEventListener('input', handlePunctualErrorMarginInputEvent);
 
 // Could try adding both lists to an array and then manipulating it so I only need to loop through once

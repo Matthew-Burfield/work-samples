@@ -177,3 +177,16 @@ body {
 .table-info {
   margin-left: 30px;
 }
+
+.time-diff-tag {
+  background-color: #E65100;
+  border-radius: 2px;
+  color: #fff;
+  font-size: 0.8em;
+  display: block;
+  float: right;
+}
+
+#punctualErrorMargin {
+  width: 40px;
+}
