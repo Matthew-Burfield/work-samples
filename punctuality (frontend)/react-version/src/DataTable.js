@@ -8,14 +8,14 @@ const diff = (time1, time2) => {
   return time1.diff(time2, 'minutes')
 }
 
-const getTimeValue = (rosteredTime, actualTime, punctualErrorMargin) => {
+const getTimeValue = (timeDiff, punctualErrorMargin) => {
   return function (startOrFinish, notPunctualMessage) {
-    if (actualTime === 'Invalid time') {
+    if (timeDiff === 'Invalid time') {
       return `no ${startOrFinish} time`
     }
-    const time1 = startOrFinish === 'start' ? rosteredTime : actualTime
-    const time2 = startOrFinish === 'start' ? actualTime : rosteredTime
-    if (diff(time1, time2) < punctualErrorMargin) {
+    // const time1 = startOrFinish === 'start' ? rosteredTime : actualTime
+    // const time2 = startOrFinish === 'start' ? actualTime : rosteredTime
+    if (timeDiff > punctualErrorMargin) {
       return notPunctualMessage
     }
     return 'on time'
@@ -65,8 +65,8 @@ const DataTable = ({data, punctualErrorMargin}) => {
             const actualFinish = moment(day.actualFinish)
             const startDiff = diff(actualStart, rosteredStart)
             const finishDiff = diff(rosteredFinish, actualFinish)
-            const getStartText = getTimeValue(rosteredStart, actualStart, punctualErrorMargin)
-            const getFinishText = getTimeValue(rosteredFinish, actualFinish, punctualErrorMargin)
+            const getStartText = getTimeValue(startDiff, punctualErrorMargin)
+            const getFinishText = getTimeValue(finishDiff, punctualErrorMargin)
             return (
               <tr key={day.date}>
                 <td>{moment(day.date).format('MMMM Do YYYY')}</td>
@@ -95,8 +95,10 @@ const DataTable = ({data, punctualErrorMargin}) => {
 DataTable.propTypes = {
   data: arrayOf(shape({
     date: string,
-    finish: string,
-    start: string
+    rosteredStart: string,
+    rosteredFinish: string,
+    actualStart: string,
+    actualFinish: string
   })),
 }
 

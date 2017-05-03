@@ -10,13 +10,13 @@ const getPieWrapperRightSideStyles = (progressBarDegrees) => {
   }
 }
 
-const PieChart = ({numTimesPunctual}) => {
-  const progressBarDegrees = numTimesPunctual / 100 * 360
+const PieChart = ({punctualPercentage}) => {
+  const progressBarDegrees = punctualPercentage / 100 * 360
   const pieStyles = progressBarDegrees > 180 ? { clip: 'rect(auto, auto, auto, auto)' } : { clip: '' }
   const pieRightSideStyles = getPieWrapperRightSideStyles(progressBarDegrees)
   return (
     <div className="pie-wrapper">
-      <span className="label">{numTimesPunctual}</span>
+      <span className="label">{punctualPercentage}</span>
       <div className="pie" style={pieStyles}>
         <div className="left-side half-circle" style={{ WebkitTransform: `rotate(${progressBarDegrees}deg)`, transform: `rotate(${progressBarDegrees}deg)`}}></div>
         <div className="right-side half-circle" style={pieRightSideStyles}></div>
@@ -26,7 +26,7 @@ const PieChart = ({numTimesPunctual}) => {
 }
 
 PieChart.propTypes = {
-  numTimesPunctual: PropTypes.number
+  punctualPercentage: PropTypes.number
 }
 
 export default PieChart

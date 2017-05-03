@@ -1,33 +1,39 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import moment from 'moment'
 import PieChart from './PieChart'
 
-const { arrayOf, number } = PropTypes
+const { arrayOf, number, func, shape, string } = PropTypes
 
-const countNumberOfTimesLeftEarly = (timeDiffs, punctualErrorMargin) => {
-  return timeDiffs.reduce((count, time) => {
-    return time > punctualErrorMargin ? count += 1 : count
+const diff = (time1, time2) => {
+  return time1.diff(time2, 'minutes')
+}
+
+const countNumberOfTimesLeftEarly = (data, punctualErrorMargin) => {
+  return data.reduce((count, day) => {
+    return diff(moment(day.rosteredFinish), moment(day.actualFinish)) > punctualErrorMargin ? count += 1 : count
   }, 0)
 }
 
-const countNumberOfTimesArrivedLate = (timeDiffs, punctualErrorMargin) => {
-  return timeDiffs.reduce((count, time) => {
-    return time < punctualErrorMargin ? count += 1 : count
+const countNumberOfTimesArrivedLate = (data, punctualErrorMargin) => {
+  return data.reduce((count, day) => {
+    return diff(moment(day.rosteredStart), moment(day.actualStart)) < punctualErrorMargin * -1 ? count += 1 : count
   }, 0)
 }
 
-const Stats = ({punctualErrorMargin, startTimeDiffs, finishTimeDiffs}) => {
-  const numTimesArrivedLate = countNumberOfTimesArrivedLate(startTimeDiffs, punctualErrorMargin)
-  const numTimesLeftEarly = countNumberOfTimesLeftEarly(finishTimeDiffs, punctualErrorMargin)
-  const totalTimes = startTimeDiffs.length + finishTimeDiffs.length
+const Stats = ({data, punctualErrorMargin, updatePunctualErrorMargin}) => {
+  const numTimesArrivedLate = countNumberOfTimesArrivedLate(data, punctualErrorMargin)
+  const numTimesLeftEarly = countNumberOfTimesLeftEarly(data, punctualErrorMargin)
   const totalTimesNotPunctual = numTimesArrivedLate + numTimesLeftEarly
-  const numTimesPunctual = Math.round((totalTimes - totalTimesNotPunctual) / totalTimes * 100)
+  const numTimesPunctual = data.length * 2 - totalTimesNotPunctual
+  const punctualPercentage = Math.round((numTimesPunctual - totalTimesNotPunctual) / numTimesPunctual * 100)
+  const input = <input id="punctualErrorMargin" type="text" value={punctualErrorMargin} onChange={updatePunctualErrorMargin} />
   return (
     <div>
-      <PieChart numTimesPunctual={numTimesPunctual} />
+      <PieChart punctualPercentage={punctualPercentage} />
       <div className="body-text">
-        For clock ins and outs within <input id="punctualErrorMargin" type="text" /> minutes of his roster,
-        Sully is punctual <span>{numTimesPunctual}</span>% of the time. Time saved: 9 mins.
+        For clock ins and outs within {input} minutes of his roster,
+        Sully is punctual <span>{punctualPercentage}</span>% of the time. Time saved: 9 mins.
       </div>
       <div className="body-stats-container">
         <div className="body-stat">
@@ -46,13 +52,18 @@ const Stats = ({punctualErrorMargin, startTimeDiffs, finishTimeDiffs}) => {
 
 Stats.propTypes = {
   punctualErrorMargin: number,
-  startTimeDiffs: arrayOf(number),
-  finishTimeDiffs: arrayOf(number)
+  updatePunctualErrorMargin: func,
+  data: arrayOf(shape({
+    date: string,
+    rosteredStart: string,
+    rosteredFinish: string,
+    actualStart: string,
+    actualFinish: string
+  })),
 }
 
 Stats.defaultProps = {
-  startTimeDiffs: [],
-  finishTimeDiffs: []
+  data: []
 }
 
 export default Stats

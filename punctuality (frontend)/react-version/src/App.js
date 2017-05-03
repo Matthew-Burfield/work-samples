@@ -13,6 +13,7 @@ class App extends Component {
       name: 'Sully',
       punctualErrorMargin: 0
     }
+    this.updatePunctualErrorMargin = this.updatePunctualErrorMargin.bind(this)
   }
 
   componentDidMount() {
@@ -30,12 +31,8 @@ class App extends Component {
             actualFinish: shift.finish
           }
         })
-
-        const timeDiffs = this.generateStats(data)
         this.setState({
-          data,
-          startTimeDiffs: timeDiffs[0],
-          finishTimeDiffs: timeDiffs[1]
+          data
         })
       }));
   }
@@ -50,18 +47,14 @@ class App extends Component {
     }
   }
 
-  generateStats(data) {
-    const startTimeDiffs = []
-    const finishTimeDiffs = []
-    data.forEach(day => {
-      if (day.rosteredStart && day.actualStart) {
-        startTimeDiffs.push(this.getTimeDifference(day.rosteredStart, day.actualStart))
-      }
-      if (day.rosteredFinish && day.actualFinish) {
-        finishTimeDiffs.push(this.getTimeDifference(day.rosteredFinish, day.actualFinish))
-      }
+  updatePunctualErrorMargin(e) {
+    let value = Number.parseInt(e.target.value, 10)
+    if (isNaN(value)) {
+      value = '';
+    }
+    this.setState({
+      punctualErrorMargin: value
     })
-    return [startTimeDiffs, finishTimeDiffs]
   }
 
   render() {
@@ -70,9 +63,9 @@ class App extends Component {
         <Header name={this.state.name} />
         <div className="body-container">
           <Stats
+            data={this.state.data}
             punctualErrorMargin={this.state.punctualErrorMargin}
-            startTimeDiffs={this.state.startTimeDiffs}
-            finishTimeDiffs={this.state.finishTimeDiffs}
+            updatePunctualErrorMargin={this.updatePunctualErrorMargin}
           />
           <DataTable data={this.state.data} punctualErrorMargin={this.state.punctualErrorMargin} />
         </div>
