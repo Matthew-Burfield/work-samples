@@ -11,8 +11,8 @@ class App extends Component {
     super(props)
     this.state = {
       name: 'Sully',
-      shifts: {},
-      roster: {},
+      shifts: [],
+      roster: [],
       stats: {
         arrivedLate: [],
         punctual: [],
@@ -27,13 +27,13 @@ class App extends Component {
     axios.get(URL_ROSTERS)
          .then(response => {
            this.setState({
-             roster: response
+             roster: response.data
            })
          })
     axios.get(URL_SHIFTS)
          .then(response => {
            this.setState({
-             shifts: response
+             shifts: response.data
            })
          })
   }
@@ -45,7 +45,7 @@ class App extends Component {
         <div className="body-container">
           <PieChart />
           <Stats />
-          <DataTable shiftData={this.state.shifts.data} rosterData={this.state.roster.data} />
+          <DataTable shiftData={this.state.shifts} rosterData={this.state.roster} />
         </div>
         <div className="footer-container">
         </div>
