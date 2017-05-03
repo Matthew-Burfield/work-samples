@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import axios from 'axios'
 import moment from 'moment'
 import Header from './Header'
-import PieChart from './PieChart'
 import Stats from './Stats'
 import DataTable from './DataTable'
 import './style.css';
@@ -70,7 +69,6 @@ class App extends Component {
       <div className="outer-container">
         <Header name={this.state.name} />
         <div className="body-container">
-          <PieChart />
           <Stats
             punctualErrorMargin={this.state.punctualErrorMargin}
             startTimeDiffs={this.state.startTimeDiffs}

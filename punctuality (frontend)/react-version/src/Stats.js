@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import PieChart from './PieChart'
 
 const { arrayOf, number } = PropTypes
 
@@ -23,6 +24,7 @@ const Stats = ({punctualErrorMargin, startTimeDiffs, finishTimeDiffs}) => {
   const numTimesPunctual = Math.round((totalTimes - totalTimesNotPunctual) / totalTimes * 100)
   return (
     <div>
+      <PieChart numTimesPunctual={numTimesPunctual} />
       <div className="body-text">
         For clock ins and outs within <input id="punctualErrorMargin" type="text" /> minutes of his roster,
         Sully is punctual <span>{numTimesPunctual}</span>% of the time. Time saved: 9 mins.
