@@ -1,6 +1,8 @@
 import React from 'react'
 import moment from 'moment'
+import ReactTable from 'react-table'
 import PropTypes from 'prop-types'
+import 'react-table/react-table.css'
 
 const { arrayOf, shape, string } = PropTypes
 
@@ -10,11 +12,9 @@ const diff = (time1, time2) => {
 
 const getTimeValue = (timeDiff, punctualErrorMargin) => {
   return function (startOrFinish, notPunctualMessage) {
-    if (timeDiff === 'Invalid time') {
-      return `no ${startOrFinish} time`
+    if (isNaN(timeDiff)) {
+      return 'no time recorded'
     }
-    // const time1 = startOrFinish === 'start' ? rosteredTime : actualTime
-    // const time2 = startOrFinish === 'start' ? actualTime : rosteredTime
     if (timeDiff > punctualErrorMargin) {
       return notPunctualMessage
     }
@@ -22,71 +22,76 @@ const getTimeValue = (timeDiff, punctualErrorMargin) => {
   }
 }
 
-// const getStartValue = (rosteredStart, actualStart, punctualErrorMargin) => {
-//   if (actualStart === 'Invalid time') {
-//     return 'no start time'
-//   }
-//   if (rosteredStart.diff(actualStart, 'minutes') < punctualErrorMargin) {
-//     return 'started late'
-//   }
-//   return 'on time'
-// }
-
-// const getFinishTime = (rosteredFinish, actualFinish, punctualErrorMargin) => {
-//   if (actualFinish === 'Invalid time') {
-//     return 'no finish time'
-//   }
-//   if (rosteredFinish.diff(actualFinish, 'minutes') > punctualErrorMargin) {
-//     return 'left early'
-//   }
-//   return 'on time'
-// }
-
 
 
 const DataTable = ({data, punctualErrorMargin}) => {
+  const tableData = data.map(day => {
+    const rosteredStart = moment(day.rosteredStart)
+    const rosteredFinish = moment(day.rosteredFinish)
+    const actualStart = moment(day.actualStart)
+    const actualFinish = moment(day.actualFinish)
+    const startDiff = diff(actualStart, rosteredStart)
+    const finishDiff = diff(rosteredFinish, actualFinish)
+    const startText = getTimeValue(startDiff, punctualErrorMargin)('start', 'started late')
+    const finishText = getTimeValue(finishDiff, punctualErrorMargin)('finish', 'left early')
+    return {
+      date: moment(day.date).format('MMMM Do YYYY'),
+      rosteredStart: rosteredStart.format('LT'),
+      actualStart: {
+        startText: startText,
+        startTime: actualStart.format('LT'),
+        startDiff: startDiff
+      },
+      rosteredFinish: rosteredFinish.format('LT'),
+      actualFinish: {
+        finishText: finishText,
+        finishTime: actualFinish.format('LT'),
+        finishDiff: finishDiff
+      }
+    }
+  })
+
+  const columns = [{
+      header: 'Day',
+      accessor: 'date',
+    }, {
+      header: 'Rostered Start',
+      accessor: 'rosteredStart'
+    }, {
+      header: 'Actual Start',
+      accessor: 'actualStart',
+      render: d => {
+        return (
+          <div>
+            {d.value.startText}
+            <div className='hover-box'>{d.value.startTime}</div>
+            {d.value.startDiff > 0 && <div className='time-diff-tag'>{d.value.startDiff} minutes</div>}
+          </div>
+        )
+      }
+    }, {
+      header: 'Rostered Finish',
+      accessor: 'rosteredFinish'
+    }, {
+      header: 'Actual Finish',
+      accessor: 'actualFinish',
+      render: d => {
+        return (
+          <div>
+            {d.value.finishText}
+            <div className='hover-box'>{d.value.finishTime}</div>
+            {d.value.finishDiff > 0 && <div className='time-diff-tag'>{d.value.finishDiff} minutes</div>}
+          </div>
+        )
+      }
+    }]
   return (
     <div className="body-table">
-      <table>
-        <thead>
-          <tr>
-            <th>Day</th>
-            <th>Rostered Start</th>
-            <th>Actual Start</th>
-            <th>Rostered Finish</th>
-            <th>Actual Finish</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length > 0 && data.map(day => {
-            const rosteredStart = moment(day.rosteredStart)
-            const rosteredFinish = moment(day.rosteredFinish)
-            const actualStart = moment(day.actualStart)
-            const actualFinish = moment(day.actualFinish)
-            const startDiff = diff(actualStart, rosteredStart)
-            const finishDiff = diff(rosteredFinish, actualFinish)
-            const getStartText = getTimeValue(startDiff, punctualErrorMargin)
-            const getFinishText = getTimeValue(finishDiff, punctualErrorMargin)
-            return (
-              <tr key={day.date}>
-                <td>{moment(day.date).format('MMMM Do YYYY')}</td>
-                <td>{rosteredStart.format('LT')}</td>
-                <td>
-                  {getStartText('start', 'started late')}
-                  <div className='hover-box'>{actualStart.format('LT')}</div>
-                  {startDiff > 0 && <div className='time-diff-tag'>{startDiff} minutes</div>}
-                </td>
-                <td>{rosteredFinish.format('LT')}</td>
-                <td>
-                  {getFinishText('finish', 'left early')}
-                  <div className='hover-box'>{actualFinish.format('LT')}</div>
-                  {finishDiff > 0 && <div className='time-diff-tag'>{finishDiff} minutes</div>}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      <ReactTable
+        data={tableData}
+        columns={columns}
+        defaultPageSize={10}
+      />
       {data.length === 0 && <img src='/images/loading_spinner.gif' alt='loading spinner' />}
     </div>
   )

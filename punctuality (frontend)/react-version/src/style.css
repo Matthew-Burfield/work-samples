@@ -143,10 +143,8 @@ body {
 
 
 
-.body-table table tbody td {
-  padding-left: 10px;
+.rt-tbody .rt-td {
   position: relative;
-  opacity: 0.7;
 }
 
 .hover-box {
@@ -162,7 +160,7 @@ body {
   transition: opacity 1s;
 }
 
-.body-table table tbody td:hover .hover-box {
+.rt-tbody .rt-td:hover .hover-box {
   opacity: 0.8;
 }
 
@@ -189,4 +187,8 @@ body {
 
 #punctualErrorMargin {
   width: 40px;
+}
+.rt-tbody .rt-tr {
+    opacity: 0.7;
+    text-align: left;
 }
