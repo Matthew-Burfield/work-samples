@@ -1,15 +1,20 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
-const Header = () =>
+const Header = ({ name }) =>
   <div className="header-container">
     <div className="profile">
       <div className="profile-image">
         <img alt="" src="/images/profile.jpg" width="70px" height="70px" />
       </div>
       <div className="profile-name">
-        <span>Sully</span>
+        <span>{name}</span>
       </div>
     </div>
   </div>;
+
+Header.propTypes = {
+  name: PropTypes.string
+}
 
 export default Header

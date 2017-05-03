@@ -4,15 +4,21 @@ import PropTypes from 'prop-types'
 
 const { arrayOf, shape, string } = PropTypes
 
-const checkAllDataHasLoaded = (numShifts, numRosters) => {
-  if (numShifts > 0 && numRosters > 0) {
-    return true
+const getStartValue = (rosteredTime, actualTime, punctualErrorMargin) => {
+  if (moment(rosteredTime).diff(moment(actualTime)) < punctualErrorMargin) {
+    return 'started late'
   }
-  return false
+  return 'on time'
 }
 
-const DataTable = ({shiftData, rosterData}) => {
-  const allDataLoaded = checkAllDataHasLoaded(shiftData.length, rosterData.length)
+const getFinishTime = (rosteredTime, actionTime, punctualErrorMargin) => {
+  if (moment(rosteredTime).diff(moment(actionTime)) > punctualErrorMargin) {
+    return 'left early'
+  }
+  return 'on time'
+}
+
+const DataTable = ({data, punctualErrorMargin}) => {
   return (
     <div className="body-table">
       <table>
@@ -26,32 +32,26 @@ const DataTable = ({shiftData, rosterData}) => {
           </tr>
         </thead>
         <tbody>
-          {allDataLoaded && rosterData.map(roster => {
-            const shift = shiftData.find(shift => shift.date === roster.date) || { start: '', finish: '' }
+          {data.length > 0 && data.map(day => {
             return (
-              <tr key={roster.date}>
-                <td>{moment(roster.date).format('MMMM Do YYYY')}</td>
-                <td>{moment(roster.start).format('LT')}</td>
-                <td>{moment(shift.start).format('LT')}</td>
-                <td>{moment(roster.finish).format('LT')}</td>
-                <td>{moment(shift.finish).format('LT')}</td>
+              <tr key={day.date}>
+                <td>{moment(day.date).format('MMMM Do YYYY')}</td>
+                <td>{moment(day.rosteredStart).format('LT')}</td>
+                <td>{getStartValue(day.rosteredStart, day.actualStart, punctualErrorMargin)}<div className='hover-box'>{moment(day.actualStart).format('LT')}</div></td>
+                <td>{moment(day.rosteredFinish).format('LT')}</td>
+                <td>{getFinishTime(day.rosteredFinish, day.actualFinish, punctualErrorMargin)}<div className='hover-box'>{moment(day.actualFinish).format('LT')}</div></td>
               </tr>
             )
           })}
         </tbody>
       </table>
-      {!allDataLoaded && <img src='/images/loading_spinner.gif' alt='loading spinner' />}
+      {data.length === 0 && <img src='/images/loading_spinner.gif' alt='loading spinner' />}
     </div>
   )
 }
 
 DataTable.propTypes = {
-  shiftData: arrayOf(shape({
-    date: string,
-    finish: string,
-    start: string
-  })),
-  rosterData: arrayOf(shape({
+  data: arrayOf(shape({
     date: string,
     finish: string,
     start: string
@@ -59,8 +59,7 @@ DataTable.propTypes = {
 }
 
 DataTable.defaultProps = {
-  shiftData: [],
-  rosterData: []
+  data: []
 }
 
 export default DataTable
